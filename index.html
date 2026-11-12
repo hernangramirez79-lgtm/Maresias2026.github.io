@@ -1,13 +1,6 @@
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Maresias 2027</title>
-<meta name="description" content="Mirá cuánto falta: días, horas, minutos y segundos.">
-<meta property="og:title" content="⏳ Maresias 2027">
-<meta property="og:description" content="Tocá para ver cuánto falta para el viaje, en vivo.">
-<meta property="og:type" content="website">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cuenta Regresiva</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Figtree:wght@400;500;600&display=swap">
 <style>
 /* Layout: una sola columna centrada; el contador es el héroe, el editor queda debajo, plegable. */
@@ -36,36 +29,45 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html { padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px); }
 body {
-  margin: 0;
   background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 40px 56px;
 }
+/* Foto de fondo: fija, cubre toda la pantalla, con velo oscuro para que se lea el contador */
+html, body { min-height: 100%; }
+body {
+  background-color: #0e121c;
+  background-image: linear-gradient(rgba(10,14,24,.55), rgba(10,14,24,.75)), url("fondo.jpg");
+  background-size: cover; background-position: center top; background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+header .eyebrow, header h1, header .target { color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+.toast { text-shadow: 0 1px 6px rgba(0,0,0,.5); }
+/* Contador más abajo, para dejar ver la foto */
+#clock, #done { margin-top: 3cm; }
+/* Recuadros del contador semitransparentes */
+.unit { background: rgba(14,18,28,.4); color: #fff; border: 1px solid rgba(255,255,255,.18); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.unit .num { text-shadow: 0 2px 10px rgba(0,0,0,.55); }
+/* Fecha en la esquina superior izquierda, para no tapar el texto de la foto */
+header .target {
+  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: max(12px, env(safe-area-inset-left, 0px));
+  margin: 0; font-size: 13px; font-weight: 600; max-width: calc(100% - 24px);
+  background: rgba(10,14,24,.55); border-radius: 999px; padding: 6px 12px;
+}
+.unit { box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.phrase, .editor { box-shadow: 0 6px 20px rgba(0,0,0,.25); }
 main { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
 .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 h1 { font-family: var(--display); font-weight: 800; font-size: clamp(36px, 9vw, 60px); line-height: 1; margin: 6px 0 0; text-wrap: balance; text-transform: uppercase; }
 .target { color: var(--muted); margin-top: 10px; }
 .clock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.clock .num { font-size: clamp(34px, 10.5vw, 84px); }
+.clock .num { font-size: clamp(40px, 12vw, 84px); }
 .clock .lbl { font-size: clamp(9px, 2.6vw, 12px); letter-spacing: .1em; }
-.unit { background: var(--tile); color: var(--tile-ink); border-radius: 14px; padding: 14px 4px 12px; text-align: center; position: relative; overflow: hidden; }
+.unit { background: var(--tile); color: var(--tile-ink); border-radius: 14px; padding: 18px 8px 14px; text-align: center; position: relative; overflow: hidden; }
+.unit::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--bg); opacity: .35; }
 .num { font-family: var(--display); font-weight: 800; font-size: clamp(52px, 16vw, 96px); line-height: 1; font-variant-numeric: tabular-nums; }
-.flap { position: relative; height: 1.1em; line-height: 1.1em; perspective: 4em; }
-.half { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background: var(--tile); backface-visibility: hidden; }
-.half span { display: block; white-space: nowrap; height: 1.1em; line-height: 1.1em; text-align: center; }
-.half.top, .half.ftop { top: 0; border-radius: 6px 6px 0 0; }
-.half.bottom, .half.fbot { bottom: 0; border-radius: 0 0 6px 6px; }
-.half.bottom span, .half.fbot span { transform: translateY(-50%); }
-.half.top, .half.ftop { background: color-mix(in srgb, var(--tile) 88%, var(--tile-ink)); }
-.half.ftop { z-index: 2; transform-origin: bottom; animation: flapTop .28s ease-in forwards; }
-.half.fbot { z-index: 2; transform-origin: top; transform: rotateX(90deg); animation: flapBot .28s .28s ease-out forwards; }
-.flap::after { content: ""; position: absolute; left: 0; right: 0; top: calc(50% - 1px); height: 2px; background: var(--tile); filter: brightness(.6); z-index: 3; }
-@keyframes flapTop { to { transform: rotateX(-90deg); } }
-@keyframes flapBot { to { transform: rotateX(0deg); } }
-@media (prefers-reduced-motion: reduce) { .half.ftop, .half.fbot { display: none; } }
 .lbl { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .7; margin-top: 8px; }
 .done { font-family: var(--display); font-weight: 800; font-size: 40px; text-align: center; color: var(--accent); text-transform: uppercase; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -80,46 +82,105 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); ou
 label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 500; }
 input { font: 16px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); min-width: 0; width: 100%; }
 .hint { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.5; }
+.phrase { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid #f2a33a; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.phrase .pt { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 6.5vw, 36px); line-height: 1.1; color: var(--ink); }
+.phrase .es { color: var(--muted); font-size: 15px; }
+.phrase .actions { margin-top: 4px; }
+.phrase .tag { align-self: flex-start; font-size: 12px; font-weight: 600; background: #f2a33a; color: #1b1300; border-radius: 999px; padding: 3px 10px; }
+.phrase .count { font-size: 12px; color: var(--muted); }
+.milestone { background: rgba(242,163,58,.95); color: #1b1300; font-weight: 700; font-size: 17px; border-radius: 14px; padding: 14px 18px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+.pack { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.pack h2 { margin: 0; font-size: 18px; }
+.pack .progress { font-size: 13px; color: var(--muted); }
+.bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar > div { height: 100%; width: 0; background: #2bb673; transition: width .3s; }
+.pack ul { list-style: none; margin: 0; padding: 0; }
+.pack li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.pack li:last-child { border-bottom: 0; }
+.pack li label { flex: 1; flex-direction: row; align-items: center; gap: 12px; font-size: 15px; color: var(--ink); cursor: pointer; padding: 4px 0; }
+.pack input[type=checkbox] { width: 20px; height: 20px; flex: none; margin: 0; accent-color: #2bb673; }
+.pack li.ok label span { text-decoration: line-through; color: var(--muted); }
+.pack .del { padding: 4px 10px; font-size: 13px; }
+.pack .add { display: flex; gap: 8px; }
+.pack .add input { flex: 1; }
+.voice { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.voice select { font: 15px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100%; }
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
-a.btn { display: inline-flex; align-items: center; font: 600 15px var(--body); border-radius: 10px; padding: 12px 18px; text-decoration: none; background: #1fa855; color: #fff; }
-a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-[hidden] { display: none !important; }
 </style>
-</head>
-<body>
+
 <main>
   <header>
     <div class="eyebrow">Faltan</div>
-    <h1 id="title">Maresias 2027</h1>
+    <h1 id="title">Maresias 🏖️</h1>
     <div class="target" id="target"></div>
   </header>
 
   <section class="clock" id="clock" aria-live="polite">
-    <div class="unit"><div class="num flap" id="d"></div><div class="lbl">Días</div></div>
-    <div class="unit"><div class="num flap" id="h"></div><div class="lbl">Horas</div></div>
-    <div class="unit"><div class="num flap" id="m"></div><div class="lbl">Minutos</div></div>
-    <div class="unit"><div class="num flap" id="s"></div><div class="lbl">Segundos</div></div>
+    <div class="unit"><div class="num" id="d">00</div><div class="lbl">Días</div></div>
+    <div class="unit"><div class="num" id="h">00</div><div class="lbl">Horas</div></div>
+    <div class="unit"><div class="num" id="m">00</div><div class="lbl">Minutos</div></div>
+    <div class="unit"><div class="num" id="s">00</div><div class="lbl">Segundos</div></div>
   </section>
   <div class="done" id="done" hidden>¡Llegó el día!</div>
+  <div class="milestone" id="milestone" hidden></div>
 
   <div>
-    <div class="actions">
-      <a class="btn" id="waShare" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
-      <button id="copyLink" type="button">Copiar link</button>
-      <button id="copyMsg" type="button">Copiar mensaje</button>
-    </div>
     <p class="toast" id="toast"></p>
     <textarea class="fallback" id="fallback" rows="3" hidden readonly></textarea>
   </div>
 
+  <section class="phrase" aria-labelledby="phTitle">
+    <div class="eyebrow" id="phTitle">Frase en portugués <span class="count" id="phCount"></span></div>
+    <div class="tag" id="phTag" hidden>⭐ Clásico de argentinos en Brasil</div>
+    <div class="pt" id="phPt" lang="pt-BR"></div>
+    <div class="es" id="phEs"></div>
+    <div class="actions">
+      <button type="button" class="primary" id="speak">🔊 Escuchar</button>
+      <button type="button" id="nextPhrase">🔄 Otra frase</button>
+      <button type="button" id="copyPhrase">Copiar frase</button>
+    </div>
+    <label class="voice" id="voiceWrap" hidden>Voz
+      <select id="voiceSel"></select>
+    </label>
+  </section>
+
+  <section class="pack" aria-labelledby="packTitle">
+    <h2 id="packTitle">🧳 Lista para la valija</h2>
+    <div class="progress" id="packProgress"></div>
+    <div class="bar"><div id="packBar"></div></div>
+    <ul id="packList"></ul>
+    <form class="add" id="packAdd">
+      <input id="packInput" type="text" maxlength="60" placeholder="Agregar algo a la lista…" aria-label="Agregar algo a la lista">
+      <button type="submit">Agregar</button>
+    </form>
+  </section>
 </main>
 
 <script>
 (function () {
-  // Evento fijo: 15/02/2027 06:25, hora de Argentina (UTC-3 = 09:25 UTC)
-  var state = { name: "Maresias 2027", date: new Date(Date.UTC(2027, 1, 15, 9, 25)) };
+  var state = { name: "Maresias 🏖️", date: new Date(2027, 1, 15, 0, 0) };
   var $ = function (id) { return document.getElementById(id); };
   var pad = function (n) { return String(n).padStart(2, "0"); };
+
+  function toHex(s) { return Array.from(new TextEncoder().encode(s)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join(""); }
+  function fromHex(h) { var b = new Uint8Array((h.match(/.{2}/g) || []).map(function (x) { return parseInt(x, 16); })); return new TextDecoder().decode(b); }
+
+  function readHash() {
+    var m = /^#c-(\d{12})(?:-([0-9a-f]+))?$/.exec(location.hash);
+    if (!m) return;
+    var s = m[1];
+    var d = new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8), +s.slice(8, 10), +s.slice(10, 12));
+    if (isNaN(d)) return;
+    state.date = d;
+    if (m[2]) { try { state.name = fromHex(m[2]) || state.name; } catch (e) {} }
+  }
+  function writeHash() {
+    var d = state.date;
+    var s = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + pad(d.getHours()) + pad(d.getMinutes());
+    var h = "#c-" + s + (state.name ? "-" + toHex(state.name) : "");
+    try { history.replaceState(null, "", h); } catch (e) { location.hash = h; }
+  }
 
   function remaining() {
     var ms = Math.max(0, state.date - new Date());
@@ -127,61 +188,309 @@ a.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     return { ms: ms, d: Math.floor(secs / 86400), h: Math.floor((secs % 86400) / 3600), m: Math.floor((secs % 3600) / 60), s: secs % 60 };
   }
 
-  var fmt = new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Argentina/Buenos_Aires" });
-
-  function half(cls, v) { return '<div class="half ' + cls + '"><span>' + v + '</span></div>'; }
-  function flip(el, v) {
-    var old = el.dataset.v;
-    if (old === v) return;
-    el.dataset.v = v;
-    if (old === undefined) { el.innerHTML = half("top", v) + half("bottom", v); return; }
-    // arriba ya muestra el nuevo; abajo sigue el viejo hasta que cae la paleta
-    el.innerHTML = half("top", v) + half("bottom", old) + half("ftop", old) + half("fbot", v);
-    clearTimeout(el._t);
-    el._t = setTimeout(function () { if (el.dataset.v === v) el.innerHTML = half("top", v) + half("bottom", v); }, 620);
-  }
+  var fmt = new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   function render() {
     var r = remaining();
-    flip($("d"), r.d > 99 ? String(r.d) : pad(r.d));
-    flip($("h"), pad(r.h));
-    flip($("m"), pad(r.m));
-    flip($("s"), pad(r.s));
+    $("title").textContent = state.name || "Mi evento";
+    $("target").textContent = "✈️ " + fmt.format(state.date) + " h";
+    $("d").textContent = r.d > 99 ? r.d : pad(r.d);
+    $("h").textContent = pad(r.h);
+    $("m").textContent = pad(r.m);
+    $("s").textContent = pad(r.s);
     var over = r.ms === 0;
     $("clock").hidden = over;
     $("done").hidden = !over;
   }
 
+  function syncForm() {}
+
   function toast(t) { $("toast").textContent = t; clearTimeout(toast.t); toast.t = setTimeout(function () { $("toast").textContent = ""; }, 3000); }
 
-  function message() {
-    var r = remaining();
-    return r.ms === 0
-      ? "⏰ ¡Llegó " + state.name + "!"
-      : "⏳ Faltan " + r.d + " días, " + r.h + " horas, " + r.m + " minutos y " + r.s + " segundos para " + state.name + " 🌴";
+
+
+
+  var PHRASES = [
+    ["Quero um guarda-sol e uma cerveja pra deitar na praia e curtir o dia.", "Quiero una sombrilla y una cerveza para tirarme en la playa y disfrutar del día."],
+    ["Quanto custa alugar duas cadeiras de praia?", "¿Cuánto cuesta alquilar dos reposeras?"],
+    ["Uma caipirinha, por favor.", "Una caipirinha, por favor."],
+    ["Me traz a conta, por favor?", "¿Me traés la cuenta, por favor?"],
+    ["Vocês aceitam cartão ou só dinheiro?", "¿Aceptan tarjeta o solo efectivo?"],
+    ["Uma água de coco bem gelada, por favor.", "Un agua de coco bien fría, por favor."],
+    ["Onde tem um banheiro?", "¿Dónde hay un baño?"],
+    ["Onde posso comprar protetor solar?", "¿Dónde puedo comprar protector solar?"],
+    ["Uma mesa para quatro, por favor.", "Una mesa para cuatro, por favor."],
+    ["O que você me recomenda pra comer?", "¿Qué me recomendás para comer?"],
+    ["Quero uma porção de camarão.", "Quiero una porción de camarones."],
+    ["O mar está muito forte hoje?", "¿Está muy fuerte el mar hoy?"],
+    ["Tem lugar pra estacionar?", "¿Hay lugar para estacionar?"],
+    ["Que horas a cozinha fecha?", "¿A qué hora cierra la cocina?"],
+    ["Você pode tirar uma foto da gente?", "¿Nos sacás una foto?"],
+    ["Tem cerveja bem gelada?", "¿Tienen cerveza bien fría?"],
+    ["Somos da Argentina, é nossa primeira vez em Maresias.", "Somos de Argentina, es nuestra primera vez en Maresias."],
+    ["Onde fica o mercado mais perto?", "¿Dónde está el supermercado más cercano?"],
+    ["Quanto fica um Uber até o centro?", "¿Cuánto sale un Uber hasta el centro?"],
+    ["Preciso de uma farmácia.", "Necesito una farmacia."],
+    ["Me queimei no sol, o que você recomenda?", "Me quemé con el sol, ¿qué me recomendás?"],
+    ["Posso deixar as coisas aqui um pouquinho?", "¿Puedo dejar las cosas acá un ratito?"],
+    ["Que horas é o check-out?", "¿A qué hora es el check-out?"],
+    ["Tem wi-fi? Qual é a senha?", "¿Tienen wifi? ¿Cuál es la contraseña?"],
+    ["Um café com leite e um pão na chapa, por favor.", "Un café con leche y un pan tostado con manteca, por favor."],
+    ["Sem açúcar, por favor.", "Sin azúcar, por favor."],
+    ["Onde dá pra alugar uma prancha de surfe?", "¿Dónde se puede alquilar una tabla de surf?"],
+    ["Quero fazer uma aula de surfe.", "Quiero tomar una clase de surf."],
+    ["Precisa fazer reserva?", "¿Hay que reservar?"],
+    ["Isso é apimentado?", "¿Esto es picante?"],
+    ["Uma porção de batata frita, por favor.", "Una porción de papas fritas, por favor."],
+    ["Onde tem um caixa eletrônico?", "¿Dónde hay un cajero automático?"],
+    ["Quanto deu no total?", "¿Cuánto es en total?"],
+    ["Faz um desconto pra mim?", "¿Me hacés un descuento?"],
+    ["Mais uma cerveja, por favor.", "Otra cerveza, por favor."],
+    ["Que horas é o pôr do sol?", "¿A qué hora es el atardecer?"],
+    ["Qual é a melhor praia pra nadar?", "¿Cuál es la mejor playa para nadar?"],
+    ["Onde fica o salva-vidas?", "¿Dónde está el guardavidas?"],
+    ["Onde posso comprar gelo?", "¿Dónde puedo comprar hielo?"],
+    ["Quero um açaí com banana e granola.", "Quiero un açaí con banana y granola."],
+    ["Quanto é o quilo?", "¿Cuánto sale el kilo? (en los restaurantes por peso)"],
+    ["Pra viagem, por favor.", "Para llevar, por favor."],
+    ["Uma garrafa de água sem gás.", "Una botella de agua sin gas."],
+    ["Você pode falar mais devagar?", "¿Podés hablar más despacio?"],
+    ["Não entendi, pode repetir?", "No entendí, ¿me lo repetís?"],
+    ["Onde posso carregar o celular?", "¿Dónde puedo cargar el celular?"],
+    ["Que horas passa o ônibus pra São Sebastião?", "¿A qué hora pasa el colectivo a São Sebastião?"],
+    ["Quero um guarda-sol e duas cadeiras pro dia todo.", "Quiero una sombrilla y dos reposeras para todo el día."],
+    ["Tem opção sem carne?", "¿Tienen alguna opción sin carne?"],
+    ["Muito obrigado, estava tudo ótimo!", "¡Muchas gracias, estuvo todo buenísimo!"],
+    ["Tudo bem? Desculpa, não falo português muito bem.", "¿Todo bien? Perdón, no hablo muy bien portugués.", 1],
+    ["Você fala espanhol?", "¿Hablás español?", 1],
+    ["Vocês aceitam pesos argentinos?", "¿Aceptan pesos argentinos?", 1],
+    ["Onde posso trocar dinheiro?", "¿Dónde puedo cambiar plata?", 1],
+    ["Qual é a cotação do real hoje?", "¿A cuánto está el real hoy?", 1],
+    ["Posso pagar com Pix?", "¿Puedo pagar con Pix?", 1],
+    ["Tem desconto pagando em dinheiro?", "¿Hay descuento pagando en efectivo?", 1],
+    ["No crédito, por favor.", "Con tarjeta de crédito, por favor."],
+    ["Me vê um chope bem gelado.", "Dame un chopp bien frío.", 1],
+    ["Duas latinhas de cerveja, por favor.", "Dos latitas de cerveza, por favor."],
+    ["Um pastel de queijo e um caldo de cana.", "Un pastel de queso y un jugo de caña."],
+    ["Quanto é o queijo coalho?", "¿Cuánto sale el queso asado? (el que venden en la playa)", 1],
+    ["Me vê um milho cozido.", "Dame un choclo hervido.", 1],
+    ["Tem picanha?", "¿Tienen picanha?", 1],
+    ["Uma porção de mandioca frita.", "Una porción de mandioca frita."],
+    ["Um prato feito, por favor.", "Un plato del día, por favor."],
+    ["Um suco de maracujá natural.", "Un jugo natural de maracuyá."],
+    ["Tem cardápio em espanhol?", "¿Tienen la carta en español?"],
+    ["Saideira! Me vê a última.", "¡La última! Dame la del estribo.", 1],
+    ["Que delícia, valeu!", "¡Qué rico, gracias!"],
+    ["Quero um quarto com vista pro mar.", "Quiero una habitación con vista al mar."],
+    ["O café da manhã está incluído?", "¿El desayuno está incluido?"],
+    ["O ar-condicionado não está funcionando.", "El aire acondicionado no funciona."],
+    ["Pode trocar as toalhas, por favor?", "¿Me pueden cambiar las toallas, por favor?"],
+    ["Pode me ajudar com as malas?", "¿Me ayudás con las valijas?"],
+    ["Onde tem um posto de gasolina?", "¿Dónde hay una estación de servicio?"],
+    ["Completa com gasolina comum, por favor.", "Llename el tanque con nafta común, por favor.", 1],
+    ["Pode calibrar os pneus?", "¿Me podés controlar el aire de las cubiertas?"],
+    ["Tem pedágio no caminho?", "¿Hay peaje en el camino?", 1],
+    ["Onde compro um chip pré-pago pro celular?", "¿Dónde compro un chip prepago para el celular?", 1],
+    ["Onde compro repelente?", "¿Dónde compro repelente?"],
+    ["Que calor! Tô morrendo de calor.", "¡Qué calor! Me estoy muriendo de calor."],
+    ["Hoje vai chover?", "¿Hoy va a llover?"],
+    ["Quanto custa o passeio de barco?", "¿Cuánto cuesta el paseo en barco?"],
+    ["Que horas sai o passeio?", "¿A qué hora sale el paseo?"],
+    ["Onde começa a trilha?", "¿Dónde empieza el sendero?"],
+    ["Que horas abre?", "¿A qué hora abre?"],
+    ["Vou levar este.", "Me llevo este."],
+    ["Tem um tamanho maior?", "¿Tienen un talle más grande?"],
+    ["Pode embrulhar pra presente?", "¿Me lo envolvés para regalo?"],
+    ["Pode me chamar um táxi?", "¿Me podés pedir un taxi?"],
+    ["Onde tem uma feirinha de artesanato?", "¿Dónde hay una feria de artesanías?"],
+    ["Tem barraca com sombra?", "¿Hay algún parador con sombra?"],
+    ["Beleza, combinado!", "¡Dale, trato hecho!", 1],
+    ["A gente volta no ano que vem!", "¡Volvemos el año que viene!"]
+  ];
+  // Cada visita muestra una frase nueva al azar, sin repetir hasta haber visto las 95.
+  var SEEN_KEY = "maresias-frases-vistas";
+  function loadSeen() {
+    try { var a = JSON.parse(localStorage.getItem(SEEN_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; }
   }
-  function copy(text, okMsg) {
+  function saveSeen(a) { try { localStorage.setItem(SEEN_KEY, JSON.stringify(a)); } catch (e) {} }
+  function renderPhrase() {
+    var seen = loadSeen().filter(function (n) { return n >= 0 && n < PHRASES.length; });
+    if (seen.length >= PHRASES.length) seen = [];
+    var pool = [];
+    for (var k = 0; k < PHRASES.length; k++) if (seen.indexOf(k) === -1) pool.push(k);
+    var i = pool[Math.floor(Math.random() * pool.length)];
+    seen.push(i);
+    saveSeen(seen);
+    var p = PHRASES[i];
+    $("phPt").textContent = p[0];
+    $("phEs").textContent = p[1];
+    $("phTag").hidden = !p[2];
+    $("phCount").textContent = "· " + seen.length + " de " + PHRASES.length + " vistas";
+  }
+  $("copyPhrase").addEventListener("click", function () {
+    var msg = "🇧🇷 Frase en portugués: " + $("phPt").textContent + "\n(" + $("phEs").textContent + ")";
     var fb = $("fallback");
-    function fallback() { fb.value = text; fb.hidden = false; fb.focus(); fb.select(); toast("Seleccioná el texto y copialo."); }
+    function fallback() { fb.value = msg; fb.hidden = false; fb.focus(); fb.select(); toast("Seleccioná el texto y copialo."); }
     try {
-      navigator.clipboard.writeText(text).then(function () { fb.hidden = true; toast(okMsg); }, fallback);
+      navigator.clipboard.writeText(msg).then(function () { fb.hidden = true; toast("Frase copiada."); }, fallback);
     } catch (e) { fallback(); }
-  }
-  function shareUrl() { return location.origin + location.pathname; }
-
-  $("title").textContent = state.name;
-  $("target").textContent = fmt.format(state.date) + " h";
-
-  $("copyMsg").addEventListener("click", function () { copy(message(), "Mensaje copiado. Pegalo en WhatsApp."); });
-  $("copyLink").addEventListener("click", function () { copy(shareUrl(), "Link copiado."); });
-  $("waShare").addEventListener("click", function () {
-    this.href = "https://wa.me/?text=" + encodeURIComponent(message() + "\n\nMirala en vivo 👉 " + shareUrl());
   });
+  renderPhrase();
+  $("nextPhrase").addEventListener("click", function () { renderPhrase(); });
 
-  render();
+  // Escuchar la frase en portugués de Brasil
+  var VOICE_KEY = "maresias-voz";
+  // Ordena las voces: primero las de Brasil y las de mejor calidad (naturales, mejoradas, de Google o Microsoft online)
+  function voiceScore(v) {
+    var s = 0, n = (v.name || "") + " " + (v.voiceURI || "");
+    if (/^pt[-_]BR/i.test(v.lang)) s += 100; else if (/^pt/i.test(v.lang)) s += 10;
+    if (/natural|neural|online|premium|enhanced|mejorad|aprimorad|siri/i.test(n)) s += 40;
+    if (/google/i.test(n)) s += 25;
+    if (/francisca|thalita|antonio|luciana|felipe|fernanda/i.test(n)) s += 15;
+    if (/compact|espeak/i.test(n)) s -= 30;
+    return s;
+  }
+  function ptVoices() {
+    try {
+      return window.speechSynthesis.getVoices().filter(function (v) { return /^pt/i.test(v.lang); })
+        .sort(function (a, b) { return voiceScore(b) - voiceScore(a); });
+    } catch (e) { return []; }
+  }
+  function fillVoices() {
+    var vs = ptVoices(), sel = $("voiceSel");
+    if (!vs.length) { $("voiceWrap").hidden = true; return; }
+    var saved = null; try { saved = localStorage.getItem(VOICE_KEY); } catch (e) {}
+    sel.innerHTML = "";
+    vs.forEach(function (v) {
+      var o = document.createElement("option");
+      o.value = v.voiceURI; o.textContent = v.name + (/^pt[-_]BR/i.test(v.lang) ? " 🇧🇷" : " 🇵🇹");
+      if (v.voiceURI === saved) o.selected = true;
+      sel.appendChild(o);
+    });
+    $("voiceWrap").hidden = false;
+  }
+  function pickVoice() {
+    var vs = ptVoices(), want = $("voiceSel").value;
+    return vs.filter(function (v) { return v.voiceURI === want; })[0] || vs[0] || null;
+  }
+  $("voiceSel").addEventListener("change", function () {
+    try { localStorage.setItem(VOICE_KEY, $("voiceSel").value); } catch (e) {}
+    $("speak").click();
+  });
+  try {
+    if ("speechSynthesis" in window) {
+      fillVoices();
+      window.speechSynthesis.addEventListener ? window.speechSynthesis.addEventListener("voiceschanged", fillVoices) : (window.speechSynthesis.onvoiceschanged = fillVoices);
+    }
+  } catch (e) {}
+  $("speak").addEventListener("click", function () {
+    if (!("speechSynthesis" in window)) { toast("Este navegador no puede leer en voz alta."); return; }
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance($("phPt").textContent);
+      u.lang = "pt-BR"; u.rate = 0.95; u.pitch = 1.05;
+      var v = pickVoice(); if (v) u.voice = v;
+      window.speechSynthesis.speak(u);
+    } catch (e) { toast("No se pudo reproducir el audio."); }
+  });
+  try { if ("speechSynthesis" in window) window.speechSynthesis.getVoices(); } catch (e) {}
+
+  // Lista para la valija (se guarda en este navegador)
+  var PACK_KEY = "maresias-valija";
+  var PACK_DEFAULT = [
+    "DNI o pasaporte", "Reservas de alojamiento", "Seguro de viaje", "Reales y tarjetas",
+    "Chip o roaming para el celular", "Cargador y power bank", "Adaptador de enchufe",
+    "Protector solar", "Repelente", "Anteojos de sol", "Gorra o sombrero", "Mallas",
+    "Ojotas", "Toallón de playa", "Remedios de uso habitual", "Ropa liviana",
+    "Un abrigo liviano para la noche", "Si van en auto: licencia, cédula y seguro"
+  ];
+  function loadPack() {
+    try { var o = JSON.parse(localStorage.getItem(PACK_KEY) || "null"); if (o && o.checked && Array.isArray(o.custom)) return o; } catch (e) {}
+    return { checked: {}, custom: [] };
+  }
+  var pack = loadPack();
+  function savePack() { try { localStorage.setItem(PACK_KEY, JSON.stringify(pack)); } catch (e) {} }
+  function renderPack() {
+    var items = PACK_DEFAULT.map(function (t, i) { return { id: "d" + i, text: t, custom: false }; })
+      .concat(pack.custom.map(function (c) { return { id: c.id, text: c.text, custom: true }; }));
+    var ul = $("packList"); ul.innerHTML = "";
+    var done = 0;
+    items.forEach(function (it) {
+      var ok = !!pack.checked[it.id]; if (ok) done++;
+      var li = document.createElement("li"); if (ok) li.className = "ok";
+      var lab = document.createElement("label");
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = ok;
+      cb.addEventListener("change", function () { if (cb.checked) pack.checked[it.id] = true; else delete pack.checked[it.id]; savePack(); renderPack(); });
+      var sp = document.createElement("span"); sp.textContent = it.text;
+      lab.appendChild(cb); lab.appendChild(sp); li.appendChild(lab);
+      if (it.custom) {
+        var del = document.createElement("button"); del.type = "button"; del.className = "del"; del.textContent = "✕";
+        del.setAttribute("aria-label", "Quitar " + it.text);
+        del.addEventListener("click", function () { pack.custom = pack.custom.filter(function (c) { return c.id !== it.id; }); delete pack.checked[it.id]; savePack(); renderPack(); });
+        li.appendChild(del);
+      }
+      ul.appendChild(li);
+    });
+    $("packProgress").textContent = done === items.length ? "¡Valija lista! ✅" : done + " de " + items.length + " listos";
+    $("packBar").style.width = (items.length ? Math.round(done / items.length * 100) : 0) + "%";
+  }
+  $("packAdd").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var t = $("packInput").value.trim(); if (!t) return;
+    pack.custom.push({ id: "c" + Date.now(), text: t });
+    $("packInput").value = ""; savePack(); renderPack();
+  });
+  renderPack();
+
+  // Festejos: mensajes al mes, la semana y el día, y papel picado
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function confetti(ms) {
+    if (reduceMotion || document.getElementById("confetti")) return;
+    var c = document.createElement("canvas"); c.id = "confetti"; document.body.appendChild(c);
+    var ctx = c.getContext("2d"), W, H;
+    function size() { W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+    size(); window.addEventListener("resize", size);
+    var colors = ["#f2a33a", "#2bb673", "#2f5bea", "#ffd23f", "#ff5d73", "#ffffff"];
+    var parts = [];
+    for (var i = 0; i < 160; i++) parts.push({ x: Math.random() * W, y: -20 - Math.random() * H * 0.6, w: 6 + Math.random() * 6, h: 8 + Math.random() * 8, vy: 2 + Math.random() * 3, vx: -1.5 + Math.random() * 3, r: Math.random() * 6.28, vr: -0.2 + Math.random() * 0.4, col: colors[i % colors.length] });
+    var end = Date.now() + ms;
+    (function tick() {
+      ctx.clearRect(0, 0, W, H);
+      var alive = false, more = Date.now() < end;
+      parts.forEach(function (p) {
+        p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        if (more && p.y > H + 20) { p.y = -20; p.x = Math.random() * W; }
+        if (p.y < H + 20) alive = true;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.col; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      });
+      if (alive) requestAnimationFrame(tick); else { window.removeEventListener("resize", size); c.remove(); }
+    })();
+  }
+  var MILESTONES = {
+    "30": "📅 ¡Falta un mes para Maresias! Empezá a mirar la valija.",
+    "7": "🧳 ¡Falta una semana! Hora de armar la valija.",
+    "1": "⏳ ¡Falta un día! Mañana a esta hora ya casi están.",
+    "0": "🚗 ¡Menos de 24 horas! Ya huele a playa.",
+    "done": "🎉 Boa viagem! ¡A disfrutar Maresias!"
+  };
+  var lastMilestone = null;
+  function checkMilestone() {
+    var r = remaining();
+    var key = r.ms === 0 ? "done" : (MILESTONES[String(r.d)] ? String(r.d) : "");
+    if (key === lastMilestone) return;
+    var first = lastMilestone === null;
+    lastMilestone = key;
+    $("milestone").hidden = !key;
+    $("milestone").textContent = key ? MILESTONES[key] : "";
+    if (key) confetti(key === "done" ? 8000 : 4000);
+  }
+  setInterval(checkMilestone, 1000);
+  if (location.hash === "#festejo") setTimeout(function () { confetti(5000); }, 300);
+
+  window.addEventListener("hashchange", function () { readHash(); syncForm(); render(); });
+  readHash(); syncForm(); render(); checkMilestone();
   setInterval(render, 1000);
 })();
 </script>
 
-</body>
-</html>
+</body></html>
