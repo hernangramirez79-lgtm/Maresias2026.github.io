@@ -105,6 +105,15 @@ input { font: 16px var(--body); padding: 10px 12px; border: 1px solid var(--line
 .pack .add input { flex: 1; }
 .voice { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
 .voice select { font: 15px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100%; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.tabs button { padding: 8px 4px; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tabs button small { font-size: 11px; font-weight: 500; opacity: .75; }
+.tabs button[aria-selected="true"] { background: #2bb673; border-color: #2bb673; color: #fff; }
+.login { display: flex; flex-direction: column; gap: 10px; }
+.loginMsg { margin: 0; font-size: 15px; line-height: 1.4; }
+.loginErr { margin: 0; color: #e5484d; font-weight: 600; font-size: 14px; min-height: 1.2em; }
+#packBody { display: flex; flex-direction: column; gap: 12px; }
+.logout { align-self: flex-start; padding: 6px 12px; font-size: 13px; }
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
 </style>
@@ -146,8 +155,17 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
   </section>
 
   <section class="pack" aria-labelledby="packTitle">
-    <h2 id="packTitle">🧳 Lista para la valija</h2>
+    <h2 id="packTitle">🧳 Bitácora de valija</h2>
+    <div class="tabs" id="packTabs" role="tablist" aria-label="De quién es la bitácora"></div>
     <div class="progress" id="packMode"></div>
+    <form class="login" id="loginForm" hidden>
+      <p class="loginMsg" id="loginMsg"></p>
+      <input id="pw1" type="password" minlength="6" autocomplete="current-password" placeholder="Clave" aria-label="Clave">
+      <input id="pw2" type="password" minlength="6" autocomplete="new-password" placeholder="Repetí la clave" aria-label="Repetí la clave" hidden>
+      <button type="submit" class="primary" id="loginBtn">Entrar</button>
+      <p class="loginErr" id="loginErr"></p>
+    </form>
+    <div id="packBody">
     <div class="progress" id="packProgress"></div>
     <div class="bar"><div id="packBar"></div></div>
     <ul id="packList"></ul>
@@ -155,6 +173,8 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
       <input id="packInput" type="text" maxlength="60" placeholder="Agregar algo a la lista…" aria-label="Agregar algo a la lista">
       <button type="submit">Agregar</button>
     </form>
+    <button type="button" class="logout" id="logout" hidden>Cerrar sesión</button>
+    </div>
   </section>
 </main>
 
@@ -410,6 +430,7 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
     }
   } catch (e) { sb = null; }
 
+  var PERSONAS = ["Cynthia", "Romina", "Sergio", "Hernan"];
   var PACK_DEFAULT = [
     "DNI o pasaporte", "Reservas de alojamiento", "Seguro de viaje", "Reales y tarjetas",
     "Chip o roaming para el celular", "Cargador y power bank", "Adaptador de enchufe",
@@ -417,9 +438,33 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
     "Ojotas", "Toallón de playa", "Remedios de uso habitual", "Ropa liviana",
     "Un abrigo liviano para la noche", "Si van en auto: licencia, cédula y seguro"
   ];
+  var PERSONA_KEY = "maresias-persona";
+  var persona = PERSONAS[PERSONAS.length - 1];
+  try { var pSaved = localStorage.getItem(PERSONA_KEY); if (PERSONAS.indexOf(pSaved) !== -1) persona = pSaved; } catch (e) {}
 
-  // Dibuja la lista. items: [{id, texto, listo, borrable}]
-  function drawPack(items, onToggle, onDelete) {
+  // items: [{id, persona, texto, listo, fijo}] de todas las personas
+  var allItems = [];
+  var handlers = { toggle: function () {}, remove: function () {}, add: function () {} };
+
+  function drawTabs() {
+    var box = $("packTabs"); box.innerHTML = "";
+    PERSONAS.forEach(function (p) {
+      var mine = allItems.filter(function (it) { return it.persona === p; });
+      var done = mine.filter(function (it) { return it.listo; }).length;
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", p === persona ? "true" : "false");
+      b.textContent = p;
+      var sm = document.createElement("small");
+      sm.textContent = (sb && p !== me) ? "🔒" : done + "/" + mine.length;
+      b.appendChild(sm);
+      b.addEventListener("click", function () { persona = p; try { localStorage.setItem(PERSONA_KEY, p); } catch (e) {} drawAll(); });
+      box.appendChild(b);
+    });
+  }
+  function drawList() {
+    $("packTitle").textContent = "🧳 Bitácora de " + persona;
+    $("packInput").placeholder = "Agregar algo a la bitácora de " + persona + "…";
+    var items = allItems.filter(function (it) { return it.persona === persona; });
     var ul = $("packList"); ul.innerHTML = "";
     var done = 0;
     items.forEach(function (it) {
@@ -427,13 +472,15 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
       var li = document.createElement("li"); if (it.listo) li.className = "ok";
       var lab = document.createElement("label");
       var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!it.listo;
-      cb.addEventListener("change", function () { onToggle(it, cb.checked); });
+      cb.addEventListener("change", function () { it.listo = cb.checked; drawAll(); handlers.toggle(it, cb.checked); });
       var sp = document.createElement("span"); sp.textContent = it.texto;
       lab.appendChild(cb); lab.appendChild(sp); li.appendChild(lab);
-      if (it.borrable) {
+      if (!it.fijo) {
         var del = document.createElement("button"); del.type = "button"; del.className = "del"; del.textContent = "✕";
         del.setAttribute("aria-label", "Quitar " + it.texto);
-        del.addEventListener("click", function () { onDelete(it); });
+        del.addEventListener("click", function () {
+          allItems = allItems.filter(function (x) { return x !== it; }); drawAll(); handlers.remove(it);
+        });
         li.appendChild(del);
       }
       ul.appendChild(li);
@@ -441,51 +488,125 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
     $("packProgress").textContent = items.length && done === items.length ? "¡Valija lista! ✅" : done + " de " + items.length + " listos";
     $("packBar").style.width = (items.length ? Math.round(done / items.length * 100) : 0) + "%";
   }
+  var me = null;            // nombre de quien inició sesión (modo compartido)
+  var showLogin = function () {};
+  function drawAll() {
+    drawTabs();
+    var locked = !!sb && persona !== me;
+    $("loginForm").hidden = !locked;
+    $("packBody").hidden = locked;
+    if (locked) { $("packTitle").textContent = "🔒 Bitácora de " + persona; showLogin(); return; }
+    drawList();
+  }
 
-  var addHandler = function () {};
   $("packAdd").addEventListener("submit", function (e) {
     e.preventDefault();
     var t = $("packInput").value.trim(); if (!t) return;
     $("packInput").value = "";
-    addHandler(t);
+    handlers.add(t, persona);
   });
 
   if (sb) {
-    // --- Modo compartido (Supabase) ---
-    $("packMode").textContent = "👥 Lista compartida: los cambios los ven todos.";
-    var shared = [];
-    var redrawShared = function () {
-      drawPack(shared.map(function (r) { return { id: r.id, texto: r.texto, listo: r.listo, borrable: true }; }),
-        function (it, val) {
-          shared.forEach(function (r) { if (r.id === it.id) r.listo = val; });
-          redrawShared();
-          sb.from("valija").update({ listo: val }).eq("id", it.id).then(function (res) {
-            if (res.error) { toast("No se pudo guardar. Probá de nuevo."); loadShared(); }
-          });
-        },
-        function (it) {
-          shared = shared.filter(function (r) { return r.id !== it.id; });
-          redrawShared();
-          sb.from("valija").delete().eq("id", it.id).then(function (res) {
-            if (res.error) { toast("No se pudo borrar. Probá de nuevo."); loadShared(); }
-          });
-        });
+    // --- Modo compartido con usuario y clave (Supabase Auth) ---
+    // Cada uno ve solo su bitácora. El usuario es el nombre; la clave se crea la primera vez que entra.
+    var DOMINIO = "@maresias.app";
+    var emailDe = function (p) { return p.toLowerCase() + DOMINIO; };
+    var nombreDe = function (email) {
+      var u = String(email || "").toLowerCase().split("@")[0];
+      return PERSONAS.filter(function (p) { return p.toLowerCase() === u; })[0] || null;
     };
+    $("packMode").textContent = "🔐 Cada bitácora es privada: entrás con tu nombre y tu clave.";
+
     var loadShared = function () {
-      sb.from("valija").select("id,texto,listo").order("creado_en").order("id").then(function (res) {
-        if (res.error) { $("packMode").textContent = "⚠️ No se pudo cargar la lista compartida."; return; }
-        shared = res.data || [];
-        redrawShared();
+      if (!me) { allItems = []; drawAll(); return; }
+      sb.from("valija").select("id,persona,texto,listo,fijo").order("id").then(function (res) {
+        if (res.error) { $("packMode").textContent = "⚠️ No se pudo cargar tu bitácora."; return; }
+        allItems = res.data || [];
+        drawAll();
       });
     };
-    addHandler = function (t) {
-      sb.from("valija").insert({ texto: t }).then(function (res) {
+    handlers.toggle = function (it, val) {
+      sb.from("valija").update({ listo: val }).eq("id", it.id).then(function (res) {
+        if (res.error) { toast("No se pudo guardar. Probá de nuevo."); loadShared(); }
+      });
+    };
+    handlers.remove = function (it) {
+      sb.from("valija").delete().eq("id", it.id).then(function (res) {
+        if (res.error) { toast("No se pudo borrar. Probá de nuevo."); loadShared(); }
+      });
+    };
+    handlers.add = function (t, p) {
+      sb.from("valija").insert({ texto: t, persona: p }).then(function (res) {
         if (res.error) toast("No se pudo agregar. Probá de nuevo."); else loadShared();
       });
     };
-    $("packProgress").textContent = "Cargando lista…";
-    loadShared();
-    // Tiempo real: si otro cambia algo, se actualiza solo
+
+    // Formulario de ingreso: si la persona ya tiene clave, la pide; si no, la crea
+    var registrado = {};   // persona -> true/false
+    var loginFor = null;
+    showLogin = function () {
+      var p = persona;
+      if (loginFor !== p) { $("pw1").value = ""; $("pw2").value = ""; $("loginErr").textContent = ""; loginFor = p; }
+      var paint = function () {
+        var r = registrado[p];
+        if (r === undefined) { $("loginMsg").textContent = "Cargando…"; $("pw2").hidden = true; return; }
+        if (r) {
+          $("loginMsg").textContent = "Usuario: " + p + ". Ingresá tu clave.";
+          $("pw2").hidden = true; $("pw1").autocomplete = "current-password"; $("loginBtn").textContent = "Entrar";
+        } else {
+          $("loginMsg").textContent = "¡Hola " + p + "! Es tu primera vez: creá tu clave (mínimo 6 caracteres). Guardala, la vas a necesitar para volver a entrar.";
+          $("pw2").hidden = false; $("pw1").autocomplete = "new-password"; $("loginBtn").textContent = "Crear clave y entrar";
+        }
+      };
+      paint();
+      if (registrado[p] === undefined) {
+        sb.rpc("persona_registrada", { nombre: p }).then(function (res) {
+          registrado[p] = res.error ? true : !!res.data;
+          if (persona === p) paint();
+        });
+      }
+    };
+    $("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var p = persona, pw = $("pw1").value, err = $("loginErr");
+      err.textContent = "";
+      if (pw.length < 6) { err.textContent = "La clave tiene que tener al menos 6 caracteres."; return; }
+      $("loginBtn").disabled = true;
+      var fin = function () { $("loginBtn").disabled = false; };
+      if (registrado[p]) {
+        sb.auth.signInWithPassword({ email: emailDe(p), password: pw }).then(function (res) {
+          fin();
+          if (res.error) err.textContent = "Clave incorrecta. Probá de nuevo.";
+        });
+      } else {
+        if (pw !== $("pw2").value) { fin(); err.textContent = "Las dos claves no coinciden."; return; }
+        sb.auth.signUp({ email: emailDe(p), password: pw }).then(function (res) {
+          fin();
+          if (res.error) {
+            if (/registered|exists/i.test(res.error.message)) { registrado[p] = true; showLogin(); err.textContent = p + " ya tiene clave. Ingresala."; }
+            else err.textContent = "No se pudo crear la clave: " + res.error.message;
+            return;
+          }
+          registrado[p] = true;
+          if (!res.data || !res.data.session) err.textContent = "Clave creada, pero Supabase pide confirmar el email. Hay que desactivar \"Confirm email\" en Supabase.";
+        });
+      }
+    });
+    $("logout").addEventListener("click", function () { sb.auth.signOut(); });
+
+    var setSession = function (session) {
+      var n = session && session.user ? nombreDe(session.user.email) : null;
+      if (n === me && allItems.length) return;
+      me = n;
+      if (me) { persona = me; try { localStorage.setItem(PERSONA_KEY, me); } catch (e) {} }
+      $("logout").hidden = !me;
+      $("logout").textContent = me ? "Cerrar sesión (" + me + ")" : "Cerrar sesión";
+      loadShared();
+    };
+    sb.auth.onAuthStateChange(function (event, session) { setTimeout(function () { setSession(session); }, 0); });
+    drawAll();
+    sb.auth.getSession().then(function (res) { setSession(res.data && res.data.session); });
+
     try {
       sb.channel("valija-cambios")
         .on("postgres_changes", { event: "*", schema: "public", table: "valija" }, function () { loadShared(); })
@@ -494,24 +615,21 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
     document.addEventListener("visibilitychange", function () { if (!document.hidden) loadShared(); });
   } else {
     // --- Modo local (solo este navegador) ---
-    $("packMode").textContent = "📱 Esta lista se guarda solo en este navegador.";
-    var PACK_KEY = "maresias-valija";
-    var loadPack = function () {
-      try { var o = JSON.parse(localStorage.getItem(PACK_KEY) || "null"); if (o && o.checked && Array.isArray(o.custom)) return o; } catch (e) {}
-      return { checked: {}, custom: [] };
-    };
-    var pack = loadPack();
-    var savePack = function () { try { localStorage.setItem(PACK_KEY, JSON.stringify(pack)); } catch (e) {} };
-    var renderPack = function () {
-      var items = PACK_DEFAULT.map(function (t, i) { return { id: "d" + i, texto: t, borrable: false }; })
-        .concat(pack.custom.map(function (c) { return { id: c.id, texto: c.text, borrable: true }; }));
-      items.forEach(function (it) { it.listo = !!pack.checked[it.id]; });
-      drawPack(items,
-        function (it, val) { if (val) pack.checked[it.id] = true; else delete pack.checked[it.id]; savePack(); renderPack(); },
-        function (it) { pack.custom = pack.custom.filter(function (c) { return c.id !== it.id; }); delete pack.checked[it.id]; savePack(); renderPack(); });
-    };
-    addHandler = function (t) { pack.custom.push({ id: "c" + Date.now(), text: t }); savePack(); renderPack(); };
-    renderPack();
+    $("packMode").textContent = "📱 Estas bitácoras se guardan solo en este navegador.";
+    var PACK_KEY = "maresias-bitacoras";
+    var local = null;
+    try { local = JSON.parse(localStorage.getItem(PACK_KEY) || "null"); } catch (e) {}
+    if (!local || !Array.isArray(local.items)) {
+      local = { next: 1, items: [] };
+      PERSONAS.forEach(function (p) { PACK_DEFAULT.forEach(function (t) { local.items.push({ id: local.next++, persona: p, texto: t, listo: false, fijo: true }); }); });
+    }
+    allItems = local.items;
+    var saveLocal = function () { local.items = allItems; try { localStorage.setItem(PACK_KEY, JSON.stringify(local)); } catch (e) {} };
+    handlers.toggle = function () { saveLocal(); };
+    handlers.remove = function () { saveLocal(); };
+    handlers.add = function (t, p) { allItems.push({ id: local.next++, persona: p, texto: t, listo: false, fijo: false }); saveLocal(); drawAll(); };
+    saveLocal();
+    drawAll();
   }
 
   // Festejos: mensajes al mes, la semana y el día, y papel picado
