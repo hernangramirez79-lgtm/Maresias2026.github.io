@@ -147,6 +147,7 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
 
   <section class="pack" aria-labelledby="packTitle">
     <h2 id="packTitle">🧳 Lista para la valija</h2>
+    <div class="progress" id="packMode"></div>
     <div class="progress" id="packProgress"></div>
     <div class="bar"><div id="packBar"></div></div>
     <ul id="packList"></ul>
@@ -157,6 +158,7 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
   </section>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function () {
   var state = { name: "Maresias 🏖️", date: new Date(2027, 1, 15, 0, 0) };
@@ -395,8 +397,19 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
   });
   try { if ("speechSynthesis" in window) window.speechSynthesis.getVoices(); } catch (e) {}
 
-  // Lista para la valija (se guarda en este navegador)
-  var PACK_KEY = "maresias-valija";
+  // ===== Lista para la valija =====
+  // Con Supabase configurado, la lista es compartida: todos los que entran al link ven y editan la misma.
+  // Sin configurar, se guarda solo en este navegador.
+  var SUPABASE_URL = "https://cnhzpuyjhbyvyuxjkfwf.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_xJN7tPiLG9ha9otHmz38yw_G-vZl9Ye";
+
+  var sb = null;
+  try {
+    if (window.supabase && /^https:\/\//.test(SUPABASE_URL) && SUPABASE_KEY.indexOf("PEGAR") !== 0) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+  } catch (e) { sb = null; }
+
   var PACK_DEFAULT = [
     "DNI o pasaporte", "Reservas de alojamiento", "Seguro de viaje", "Reales y tarjetas",
     "Chip o roaming para el celular", "Cargador y power bank", "Adaptador de enchufe",
@@ -404,43 +417,102 @@ textarea.fallback { width: 100%; font: 14px var(--body); padding: 10px; border-r
     "Ojotas", "Toallón de playa", "Remedios de uso habitual", "Ropa liviana",
     "Un abrigo liviano para la noche", "Si van en auto: licencia, cédula y seguro"
   ];
-  function loadPack() {
-    try { var o = JSON.parse(localStorage.getItem(PACK_KEY) || "null"); if (o && o.checked && Array.isArray(o.custom)) return o; } catch (e) {}
-    return { checked: {}, custom: [] };
-  }
-  var pack = loadPack();
-  function savePack() { try { localStorage.setItem(PACK_KEY, JSON.stringify(pack)); } catch (e) {} }
-  function renderPack() {
-    var items = PACK_DEFAULT.map(function (t, i) { return { id: "d" + i, text: t, custom: false }; })
-      .concat(pack.custom.map(function (c) { return { id: c.id, text: c.text, custom: true }; }));
+
+  // Dibuja la lista. items: [{id, texto, listo, borrable}]
+  function drawPack(items, onToggle, onDelete) {
     var ul = $("packList"); ul.innerHTML = "";
     var done = 0;
     items.forEach(function (it) {
-      var ok = !!pack.checked[it.id]; if (ok) done++;
-      var li = document.createElement("li"); if (ok) li.className = "ok";
+      if (it.listo) done++;
+      var li = document.createElement("li"); if (it.listo) li.className = "ok";
       var lab = document.createElement("label");
-      var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = ok;
-      cb.addEventListener("change", function () { if (cb.checked) pack.checked[it.id] = true; else delete pack.checked[it.id]; savePack(); renderPack(); });
-      var sp = document.createElement("span"); sp.textContent = it.text;
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!it.listo;
+      cb.addEventListener("change", function () { onToggle(it, cb.checked); });
+      var sp = document.createElement("span"); sp.textContent = it.texto;
       lab.appendChild(cb); lab.appendChild(sp); li.appendChild(lab);
-      if (it.custom) {
+      if (it.borrable) {
         var del = document.createElement("button"); del.type = "button"; del.className = "del"; del.textContent = "✕";
-        del.setAttribute("aria-label", "Quitar " + it.text);
-        del.addEventListener("click", function () { pack.custom = pack.custom.filter(function (c) { return c.id !== it.id; }); delete pack.checked[it.id]; savePack(); renderPack(); });
+        del.setAttribute("aria-label", "Quitar " + it.texto);
+        del.addEventListener("click", function () { onDelete(it); });
         li.appendChild(del);
       }
       ul.appendChild(li);
     });
-    $("packProgress").textContent = done === items.length ? "¡Valija lista! ✅" : done + " de " + items.length + " listos";
+    $("packProgress").textContent = items.length && done === items.length ? "¡Valija lista! ✅" : done + " de " + items.length + " listos";
     $("packBar").style.width = (items.length ? Math.round(done / items.length * 100) : 0) + "%";
   }
+
+  var addHandler = function () {};
   $("packAdd").addEventListener("submit", function (e) {
     e.preventDefault();
     var t = $("packInput").value.trim(); if (!t) return;
-    pack.custom.push({ id: "c" + Date.now(), text: t });
-    $("packInput").value = ""; savePack(); renderPack();
+    $("packInput").value = "";
+    addHandler(t);
   });
-  renderPack();
+
+  if (sb) {
+    // --- Modo compartido (Supabase) ---
+    $("packMode").textContent = "👥 Lista compartida: los cambios los ven todos.";
+    var shared = [];
+    var redrawShared = function () {
+      drawPack(shared.map(function (r) { return { id: r.id, texto: r.texto, listo: r.listo, borrable: true }; }),
+        function (it, val) {
+          shared.forEach(function (r) { if (r.id === it.id) r.listo = val; });
+          redrawShared();
+          sb.from("valija").update({ listo: val }).eq("id", it.id).then(function (res) {
+            if (res.error) { toast("No se pudo guardar. Probá de nuevo."); loadShared(); }
+          });
+        },
+        function (it) {
+          shared = shared.filter(function (r) { return r.id !== it.id; });
+          redrawShared();
+          sb.from("valija").delete().eq("id", it.id).then(function (res) {
+            if (res.error) { toast("No se pudo borrar. Probá de nuevo."); loadShared(); }
+          });
+        });
+    };
+    var loadShared = function () {
+      sb.from("valija").select("id,texto,listo").order("creado_en").order("id").then(function (res) {
+        if (res.error) { $("packMode").textContent = "⚠️ No se pudo cargar la lista compartida."; return; }
+        shared = res.data || [];
+        redrawShared();
+      });
+    };
+    addHandler = function (t) {
+      sb.from("valija").insert({ texto: t }).then(function (res) {
+        if (res.error) toast("No se pudo agregar. Probá de nuevo."); else loadShared();
+      });
+    };
+    $("packProgress").textContent = "Cargando lista…";
+    loadShared();
+    // Tiempo real: si otro cambia algo, se actualiza solo
+    try {
+      sb.channel("valija-cambios")
+        .on("postgres_changes", { event: "*", schema: "public", table: "valija" }, function () { loadShared(); })
+        .subscribe();
+    } catch (e) {}
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) loadShared(); });
+  } else {
+    // --- Modo local (solo este navegador) ---
+    $("packMode").textContent = "📱 Esta lista se guarda solo en este navegador.";
+    var PACK_KEY = "maresias-valija";
+    var loadPack = function () {
+      try { var o = JSON.parse(localStorage.getItem(PACK_KEY) || "null"); if (o && o.checked && Array.isArray(o.custom)) return o; } catch (e) {}
+      return { checked: {}, custom: [] };
+    };
+    var pack = loadPack();
+    var savePack = function () { try { localStorage.setItem(PACK_KEY, JSON.stringify(pack)); } catch (e) {} };
+    var renderPack = function () {
+      var items = PACK_DEFAULT.map(function (t, i) { return { id: "d" + i, texto: t, borrable: false }; })
+        .concat(pack.custom.map(function (c) { return { id: c.id, texto: c.text, borrable: true }; }));
+      items.forEach(function (it) { it.listo = !!pack.checked[it.id]; });
+      drawPack(items,
+        function (it, val) { if (val) pack.checked[it.id] = true; else delete pack.checked[it.id]; savePack(); renderPack(); },
+        function (it) { pack.custom = pack.custom.filter(function (c) { return c.id !== it.id; }); delete pack.checked[it.id]; savePack(); renderPack(); });
+    };
+    addHandler = function (t) { pack.custom.push({ id: "c" + Date.now(), text: t }); savePack(); renderPack(); };
+    renderPack();
+  }
 
   // Festejos: mensajes al mes, la semana y el día, y papel picado
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
